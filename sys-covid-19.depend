@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1669168755 source:d:\projetos\sys-covid-19\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<unistd.h>
+	<locale.h>
+	<conio.h>
+
