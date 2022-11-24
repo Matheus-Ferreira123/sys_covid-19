@@ -7,3 +7,11 @@
 	<locale.h>
 	<conio.h>
 
+1669255485 source:d:\projetos\sys_covid-19\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<unistd.h>
+	<locale.h>
+	<conio.h>
+

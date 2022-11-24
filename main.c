@@ -8,36 +8,37 @@
 cidade, estado e CEP), data de nascimento e e-mail, data do diagnóstico e, se for o caso,
 informar existentes comorbidades (diabetes, obesidade, hipertensão, tuberculose etc.)*/
 
+FILE *listaPacientes;
 
 typedef struct endereco Endereco ;
 struct endereco
 {
-	char rua[30];
-	char numero[10];
-	char bairro[20];
-    char cidade[20];
-    char estado[20];
-	char cep[8];
+	char numero[40];
+	char rua[40];
+	char bairro[40];
+    char cidade[40];
+    char estado[40];
+	char cep[40];
 };
 
 typedef struct data Data ;
 struct data {
-    char dia[2], mes[2], ano[4];
+    char dia[40], mes[40], ano[40];
 };
 
 typedef struct paciente Paciente;
 struct paciente
 {
 	char nome[40];
-	char cpf[11];
-	char telefone[11];
+	char cpf[40];
 	Endereco endereco;
+	char telefone[40];
 	Data dataNascimento;
-	char email[20];
+	char email[40];
 	Data diagnostico;
 	char comorbidades[60];
-	int idade[3];
-};
+	int idade[40];
+}paciente;
 
 typedef struct usuario Usuario;
 struct usuario {
@@ -79,7 +80,7 @@ int telaLogin(){
     scanf("%s", &usuario.senha);
 
     // Validando senha
-    if(validaUsuario(usuario.nome, nome) == 1 && validaSenha(usuario.senha, senha) == 1){
+    if(igual(usuario.nome, nome) == 1 && igual(usuario.senha, senha) == 1){
         return 1;
     }else{
         limparTela();
@@ -110,7 +111,7 @@ int telaMenu(){
     if(opcao == '1'){
         telaCadastro();
     }else if(opcao == '2'){
-        telaCadastrado();
+        telaConsulta();
     }else if(opcao == '3'){
         telaComorbidade();
     }else{
@@ -122,106 +123,209 @@ int telaMenu(){
     }
 }
 
+void abrir_arq(){
+    listaPacientes = fopen("fichas_pacientes.txt", "a+b");
+    if(listaPacientes == NULL){
+        printf("Erro na abertura do arquivo\n");
+        system("pause");
+        exit(1);
+    }
+}
+
+void telaConsulta(){
+    system("cls");
+    char cpf[20];
+
+    imprimirCabecalho();
+    abrir_arq();
+    listarPacientes();
+    fclose(listaPacientes);
+
+    abrir_arq();
+    printf("\n\nInforme o cpf do paciente para emitir a ficha: ");
+    scanf("%s", &cpf);
+
+    buscarPacientePorCpf(cpf);
+    fclose(listaPacientes);
+}
+
+void buscarPacientePorCpf(cpf){
+    int a=0;
+
+    fseek(listaPacientes,SEEK_SET,1);
+    fread(&paciente,sizeof(paciente),1,listaPacientes);
+
+    if(igual(paciente.cpf, cpf) == 1){
+        a++;
+        mostrarFicha(paciente);
+    }
+
+    while(!feof(listaPacientes)){
+        if(igual(paciente.cpf, cpf) == 1){
+            a++;
+            printf("CPF: %s -", paciente.cpf);
+            printf(" Nome: %s\n", paciente.nome);
+            mostrarFicha(paciente);
+        }
+
+        fread(&paciente,sizeof(paciente),1,listaPacientes);
+    }
+    if(a == 0){
+        printf("Paciente não encontrado\n");
+        fclose(listaPacientes);
+        sleep(3);
+        telaConsulta();
+    }
+
+
+
+}
+
+int mostrarFicha(Paciente paciente){
+    char opcao[40] = "";
+
+    limparTela();
+    imprimirCabecalho();
+    printf("Paciente encontrado:\n\n");
+    printf(" Nome: %s\n", paciente.nome);
+    printf(" CPF: %s\n", paciente.cpf);
+    printf(" Email: %s\n", paciente.email);
+    printf(" Telefone: %s\n", paciente.telefone);
+    printf(" Data de nascimento: %s / %s / %s\n", paciente.dataNascimento.dia, paciente.dataNascimento.mes, paciente.dataNascimento.ano);
+    printf(" \nDados de endereço: \n\n");
+    printf(" CEP: %s\n", paciente.endereco.cep);
+    printf(" Cidade: %s\n", paciente.endereco.cidade);
+    printf(" Estado: %s\n", paciente.endereco.estado);
+    printf(" Bairro: %s\n", paciente.endereco.bairro);
+    printf(" Rua: %s\n", paciente.endereco.rua);
+    printf(" Número: %s\n", paciente.endereco.numero);
+    printf("\nData do Diagnóstico: %s / %s / %s\n", paciente.diagnostico.dia, paciente.diagnostico.mes, paciente.diagnostico.ano);
+    printf("\n\n0 - Voltar\n");
+    printf("\nSelecione uma das opcoes para continuar: ");
+    scanf("%s", opcao);
+
+    telaConsulta();
+}
+
+void listarPacientes(){
+    int a=0;
+
+    fseek(listaPacientes,SEEK_SET,1);
+    fread(&paciente,sizeof(paciente),1,listaPacientes);
+
+    printf("Pacientes encontrados: \n\n");
+    while(!feof(listaPacientes)){
+        a++;
+
+        printf(" CPF: %s - ", paciente.cpf);
+        printf("Nome: %s\n", paciente.nome);
+
+        fread(&paciente,sizeof(paciente),1,listaPacientes);
+    }
+}
+
 //Tela de cadastro do paciente
 int telaCadastro(){
 
-    Paciente paciente;
     char nomeArquivo[40];
-    char temComorbidades;
+    char temComorbidades[40];
 
     limparTela();
     imprimirCabecalho();
 
     printf("Dados do paciente:\n");
     printf(" Nome: ");
-    scanf("%s", &paciente.nome);
+    fflush(stdin);
+    gets(paciente.nome);
+
+    strcpy(nomeArquivo, paciente.nome);
+    strcat(nomeArquivo, ".txt");
+
+    abrir_arq(nomeArquivo);
 
     printf(" CPF: ");
-    scanf("%s", &paciente.cpf);
-
-    printf(" Telefone: ");
-    scanf("%s", &paciente.telefone);
+    fflush(stdin);
+    gets(paciente.cpf);
 
     printf(" Email: ");
-    scanf("%s", &paciente.email);
+    fflush(stdin);
+    gets(paciente.email);
+
+    printf(" Telefone: ");
+    fflush(stdin);
+    gets(paciente.telefone);
 
     printf("\nData de nascimento: \n");
     printf(" Dia: ");
-    scanf("%s", &paciente.dataNascimento.dia);
+    fflush(stdin);
+    gets(paciente.dataNascimento.dia);
 
     printf(" Mês: ");
-    scanf("%s", &paciente.dataNascimento.mes);
+    fflush(stdin);
+    gets(paciente.dataNascimento.mes);
 
     printf(" Ano: ");
-    scanf("%s", &paciente.dataNascimento.ano);
+    fflush(stdin);
+    gets(paciente.dataNascimento.ano);
 
     printf(" \nDados de endereço: \n");
     printf(" CEP: ");
-    scanf("%s", &paciente.endereco.cep);
+    fflush(stdin);
+    gets(paciente.endereco.cep);
 
     printf(" Cidade: ");
-    scanf("%s", &paciente.endereco.cidade);
+    fflush(stdin);
+    gets(paciente.endereco.cidade);
 
     printf(" Estado: ");
-    scanf("%s", &paciente.endereco.estado);
+    fflush(stdin);
+    gets(paciente.endereco.estado);
 
     printf(" Bairro: ");
-    scanf("%s", &paciente.endereco.bairro);
+    fflush(stdin);
+    gets(paciente.endereco.bairro);
 
     printf(" Rua: ");
-    scanf("%s", &paciente.endereco.rua);
+    fflush(stdin);
+    gets(paciente.endereco.rua);
 
     printf(" Número: ");
-    scanf("%s", &paciente.endereco.numero);
+    fflush(stdin);
+    gets(paciente.endereco.numero);
 
     printf("\nDiagnostico: \n");
-    printf(" Data do diagnóstico: ");
-    scanf("%s", &paciente.diagnostico);
+
+    printf(" Data do diagnóstico: \n");
+    printf(" Dia: ");
+    fflush(stdin);
+    gets(paciente.diagnostico.dia);
+
+    printf(" Mês: ");
+    fflush(stdin);
+    gets(paciente.diagnostico.mes);
+
+    printf(" Ano: ");
+    fflush(stdin);
+    gets(paciente.diagnostico.ano);
 
     printf(" Contêm comorbidades? (S|N) ");
-    scanf("%s", &temComorbidades);
+    fflush(stdin);
+    gets(temComorbidades);
 
-    if(temComorbidades == 'S' || temComorbidades == 's'){
+    if(igual(temComorbidades, "S") == 1 || igual(temComorbidades, "S") == 1){
         printf(" Qual(is): ");
         scanf("%s", &paciente.comorbidades);
     }
 
-
-    /*
-     * Passando o nome do paciente para uma variável antes de a dicionar o prefixo ".txt"
-     * para criar o nome do arquivo
-     */
-    strcpy(nomeArquivo, paciente.nome);
-    strcat(nomeArquivo, ".txt");
-    /*
-     * Criando o arquivo com o nome do paciente
-     */
-
-    FILE *listaPacientes;
-    listaPacientes = fopen(nomeArquivo, "w");
-    /*
-     * Inserindo os dados do paciente no arquivo
-     */
-
-    //limparTela();
-    fprintf(listaPacientes, "Nome: %s \n", paciente.nome);
-    fprintf(listaPacientes, "CPF: %s \n", paciente.cpf);
-    fprintf(listaPacientes, "Telefone: %s \n", paciente.telefone);
-    fprintf(listaPacientes, "Email: %s \n", paciente.email);
-    fprintf(listaPacientes, "Data nascimento: %s / %s / %s \n", paciente.dataNascimento.dia, paciente.dataNascimento.mes, paciente.dataNascimento.ano);
-    fprintf(listaPacientes, "CEP: %s \n", paciente.endereco.cep);
-    fprintf(listaPacientes, "Cidade: %s \n", paciente.endereco.cidade);
-    fprintf(listaPacientes, "Estado: %s \n", paciente.endereco.estado);
-    fprintf(listaPacientes, "Bairro: %s \n", paciente.endereco.bairro);
-    fprintf(listaPacientes, "Rua: %s \n", paciente.endereco.rua);
-    fprintf(listaPacientes, "Número: %s \n", paciente.endereco.numero);
-    fprintf(listaPacientes, "Diagnóstico: %s / %s / %s \n", paciente.diagnostico.dia, paciente.diagnostico.mes, paciente.diagnostico.ano);
-    fprintf(listaPacientes, "Comorbidades: %s \n", paciente.comorbidades);
-
-    //sleep(2);
-    //limparTela();
-    //telaMenu();
+    fseek(listaPacientes,SEEK_END,1);
+    fwrite(&paciente,sizeof(paciente),1,listaPacientes);
     fclose(listaPacientes);
+
+    limparTela();
+    imprimirCabecalho();
+    printf("Paciente cadastrado com sucesso!");
+    sleep(2);
+    telaMenu();
 }
 
     //Tela de pessoas com comorbidades
@@ -256,10 +360,6 @@ void limparTela(){
     system("cls");
 }
 
-int validaUsuario (nome, nomePadrao){
-    return !strcmp(nome,nomePadrao);
+int igual(dado, dadoOriginal){
+    return !strcmp(dado,dadoOriginal);
 };
-
-int validaSenha(senha, senhaPadrao){
-    return !strcmp(senha,senhaPadrao);
-}
